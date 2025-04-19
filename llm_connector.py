@@ -1,23 +1,22 @@
+import os
+from dotenv import load_dotenv
 import requests
-import json
+load_dotenv()
 
-def stream_response(prompt: str, model: str = "mistral"):
-    url = "http://localhost:11434/api/generate"
+def stream_response(prompt: str):
+    url = os.getenv("API_URL")
+    model = os.getenv("MODEL", "mistral")
+
     headers = {"Content-Type": "application/json"}
     payload = {
         "model": model,
         "prompt": prompt,
         "stream": True
     }
-
-    try:
-        with requests.post(url, json=payload, headers=headers, stream=True) as response:
-            for line in response.iter_lines():
-                if line:
-                    try:
-                        chunk = json.loads(line.decode('utf-8'))
-                        yield chunk.get("response", "")
-                    except Exception as e:
-                        yield f"\n[Error: {e}]"
-    except Exception as e:
-        yield f"\n[Connection error: {e}]"
+    response = requests.post(url, json=payload, headers=headers, stream=True)
+    if response.status_code == 200:
+        for chunk in response.iter_lines():
+            if chunk:
+                yield chunk.decode("utf-8")
+    else:
+        raise Exception(f"Error: {response.status_code}")
