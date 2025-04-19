@@ -1,5 +1,3 @@
-# chat_manager.py
-
 def format_chat_history(history):
     formatted = ""
     for msg in history:
